@@ -50,6 +50,9 @@ public:
 
 	const TArray<TScriptInterface<IPSTriggerSource>>& GetTriggerSources() const { return TriggerSources; }
 
+	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
+	FORCEINLINE float GetTriggerStrength() const { return TriggerStrength; }
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -69,13 +72,17 @@ protected:
 	UPROPERTY()
 	TArray<TScriptInterface<IPSTriggerSource>> TriggerSources;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Project Stealth")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
 	EPSTriggerType TriggerType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta= (EditCondition= "TriggerType == EPSTriggerType::Cone"), Category = "Project Stealth")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta= (EditCondition= "TriggerType == EPSTriggerType::Cone"), Category = "Project Stealth")
 	FPSTriggerConeSettings TriggerConeSettings;
 
 	FTimerHandle UpdateConeTriggerHandle;
+
+	// Strength of trigger used e.g. in Guard Component to make weaker and stronger senses
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0.0f),  Category = "Project Stealth")
+	float TriggerStrength;
 
 private:
 

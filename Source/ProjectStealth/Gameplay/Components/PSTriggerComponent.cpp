@@ -62,7 +62,7 @@ bool UPSTriggerComponent::CanTrigger(const AActor* OtherActor) const
 		return false;
 	}
 
-	if(OtherActor->Implements<UPSTriggerSource>())
+	if(!OtherActor->Implements<UPSTriggerSource>())
 	{
 		return false;
 	}
@@ -185,7 +185,7 @@ void UPSTriggerComponent::GenerateConeMesh(bool bUpdateOnly)
 		GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_WorldDynamic);
 		if(HitResult.bBlockingHit)
 		{
-			TargetPoint *= (HitResult.Distance + 1.0f) / OuterRadius;
+			TargetPoint *= (HitResult.Distance + 10.0f) / OuterRadius;
 		}
 
 		Vertices.Add(TargetPoint);

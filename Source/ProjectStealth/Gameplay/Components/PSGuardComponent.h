@@ -7,6 +7,7 @@
 #include "ProjectStealth/ProjectStealth.h"
 #include "PSGuardComponent.generated.h"
 
+class UPSGuardWidget;
 DECLARE_LOG_CATEGORY_EXTERN(LogGuard, Display, All)
 
 class UPSTriggerComponent;
@@ -38,6 +39,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
 	void OnTriggerBegin(TScriptInterface<IPSTriggerSource> TriggerSource, UPSTriggerComponent* TriggerComponent);
@@ -55,15 +57,18 @@ protected:
 	TArray<TObjectPtr<UPSTriggerComponent>> Triggers;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Project Stealth")
-	float AttentionIncreaseRate;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Project Stealth")
 	float AttentionDecreaseRate;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
 	TMap<EPSSuspicionLevel, FPSSuspicionLevelSettings> SuspicionLevelSettings;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Project Stealth")
+	TMap<EPSGuardState, float> DelayDecreaseAttentionDuration;
+
 	const float UpdateAttentionRate = 0.25f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Project Stealth")
+	TObjectPtr<UPSGuardWidget> GuardWidget;
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -80,4 +85,13 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Project Stealth")
 	FPSGuardStateChanged OnGuardStateChanged;
+
+private:
+
+	bool bAttentionWasRising = false;
+	bool bAttentionDecreaseDelay = false;
+	FTimerHandle DelayDecreasingAttentionHandle;
+
+	void DelayDecreasingAttention();
+	void CancelDelayDecreasingAttention();
 };

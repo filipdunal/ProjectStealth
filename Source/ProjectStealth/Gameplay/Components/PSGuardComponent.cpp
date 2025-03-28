@@ -4,7 +4,10 @@
 #include "ProjectStealth/Gameplay/Components/PSGuardComponent.h"
 
 #include "PSTriggerComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "ProjectStealth/Gameplay/Interfaces/PSTriggerSource.h"
+#include "ProjectStealth/Settings/PSGuardSettings.h"
+#include "ProjectStealth/Widgets/HUD/PSGuardWidget.h"
 
 DEFINE_LOG_CATEGORY(LogGuard)
 
@@ -14,13 +17,15 @@ UPSGuardComponent::UPSGuardComponent()
 
 	GuardState = EPSGuardState::Normal;
 	AttentionLevel = 0;
-	AttentionIncreaseRate = 1;
-	AttentionDecreaseRate = 1;
+	AttentionDecreaseRate = 0.1f;
 
-	SuspicionLevelSettings.Add(EPSSuspicionLevel::High, FPSSuspicionLevelSettings());
-	SuspicionLevelSettings.Add(EPSSuspicionLevel::Medium, FPSSuspicionLevelSettings());
-	SuspicionLevelSettings.Add(EPSSuspicionLevel::Low, FPSSuspicionLevelSettings());
-	SuspicionLevelSettings.Add(EPSSuspicionLevel::None, FPSSuspicionLevelSettings());
+	SuspicionLevelSettings.Add(EPSSuspicionLevel::High,   FPSSuspicionLevelSettings(0.2f, 1.0f));
+	SuspicionLevelSettings.Add(EPSSuspicionLevel::Low,    FPSSuspicionLevelSettings(0.1f, 0.5f));
+	SuspicionLevelSettings.Add(EPSSuspicionLevel::None,   FPSSuspicionLevelSettings(0.0f, 0.0f));
+
+	DelayDecreaseAttentionDuration.Add(EPSGuardState::Alerted, 5.0f);
+	DelayDecreaseAttentionDuration.Add(EPSGuardState::Suspicious, 2.0f);
+	DelayDecreaseAttentionDuration.Add(EPSGuardState::Normal, 0.0f);
 }
 
 
@@ -41,6 +46,30 @@ void UPSGuardComponent::BeginPlay()
 	for(UPSTriggerComponent* Trigger: Triggers)
 	{
 		Trigger->OnTriggerBegin.AddUniqueDynamic(this, &UPSGuardComponent::OnTriggerBegin);
+	}
+
+	// Add guard widget
+	if(APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if(const UPSGuardSettings* GuardSettings = UPSGuardSettings::StaticClass()->GetDefaultObject<UPSGuardSettings>())
+		{
+			if(GuardSettings->GuardWidgetClass && !GuardWidget)
+			{
+				GuardWidget = CreateWidget<UPSGuardWidget>(PlayerController, GuardSettings->GuardWidgetClass);
+				GuardWidget->GuardComponent = this;
+				GuardWidget->AddToViewport();
+			}
+		}
+	}
+}
+
+void UPSGuardComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if(GuardWidget)
+	{
+		GuardWidget->RemoveFromParent();
 	}
 }
 
@@ -78,10 +107,10 @@ void UPSGuardComponent::UpdateAttention()
 	{
 		for(const TScriptInterface<IPSTriggerSource>& TriggerSource : Trigger->GetTriggerSources())
 		{
-			if(TriggerSource->GetSuspicionLevel() > SuspicionLevel || MostSuspiciousTriggerSource == nullptr)
+			if(IPSTriggerSource::Execute_GetSuspicionLevel(TriggerSource.GetObject()) > SuspicionLevel || MostSuspiciousTriggerSource == nullptr)
 			{
 				MostSuspiciousTriggerSource = TriggerSource;
-				SuspicionLevel = TriggerSource->GetSuspicionLevel();
+				SuspicionLevel = IPSTriggerSource::Execute_GetSuspicionLevel(TriggerSource.GetObject());
 			}
 		}
 	}
@@ -96,11 +125,23 @@ void UPSGuardComponent::UpdateAttention()
 			{
 				AttentionLevel += Settings->AttentionRiseRate * UpdateAttentionRate;
 				AttentionLevel = FMath::Min(AttentionLevel, DesiredAttentionLevel);
+
+				bAttentionWasRising = true;
+				CancelDelayDecreasingAttention();
 			}
 			else
 			{
-				AttentionLevel -= AttentionDecreaseRate * UpdateAttentionRate;
-				AttentionLevel = FMath::Max(AttentionLevel, DesiredAttentionLevel);
+				if(bAttentionWasRising)
+				{
+					DelayDecreasingAttention();
+					bAttentionWasRising = false;
+				}
+
+				if(!bAttentionDecreaseDelay)
+				{
+					AttentionLevel -= AttentionDecreaseRate * UpdateAttentionRate;
+					AttentionLevel = FMath::Max(AttentionLevel, DesiredAttentionLevel);
+				}
 			}
 
 			OnAttentionChanged.Broadcast(AttentionLevel);
@@ -128,7 +169,7 @@ void UPSGuardComponent::UpdateAttention()
 
 	if(MostSuspiciousTriggerSource == nullptr && AttentionLevel == 0.0f)
 	{
-		if(UWorld* World = GetWorld())
+		if(const UWorld* World = GetWorld())
 		{
 			World->GetTimerManager().ClearTimer(UpdateAttentionHandle);
 		}
@@ -139,5 +180,35 @@ void UPSGuardComponent::UpdateAttention()
 void UPSGuardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+
+void UPSGuardComponent::DelayDecreasingAttention()
+{
+	const float* DelayPtr = DelayDecreaseAttentionDuration.Find(GuardState);
+	const float Delay = DelayPtr ? *DelayPtr : 0.0f;
+
+	if(Delay > 0.0f)
+	{
+		bAttentionDecreaseDelay = true;
+
+		if (const UWorld* World = GetWorld())
+		{
+			const FTimerDelegate Delegate = FTimerDelegate::CreateLambda([&]()
+				{
+					bAttentionDecreaseDelay = false;
+				});
+
+			World->GetTimerManager().SetTimer(DelayDecreasingAttentionHandle, Delegate, Delay, false);
+		}
+	}
+}
+
+void UPSGuardComponent::CancelDelayDecreasingAttention()
+{
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DelayDecreasingAttentionHandle);
+	}
 }
 

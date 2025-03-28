@@ -25,7 +25,14 @@ enum class EPSSuspicionLevel : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Low UMETA(DisplayName = "Low"),
-	Medium UMETA(DisplayName = "Medium"),
 	High UMETA(DisplayName = "High"),
+};
+
+
+class FProjectStealth: public FDefaultGameModuleImpl
+{
+public:
+	virtual void StartupModule() override;
+	virtual void ShutdownModule() override;
 };
 
