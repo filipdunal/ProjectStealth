@@ -7,9 +7,23 @@
 #include "PSGameModeBase.generated.h"
 
 
+class APSGameStateBase;
+
 UCLASS()
 class PROJECTSTEALTH_API APSGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
+	void EndGame(bool bWin);
+
+protected:
+
+	virtual void BeginPlay() override;
+
+
+	UPROPERTY(BlueprintReadOnly, Category = "Project Stealth")
+	TObjectPtr<APSGameStateBase> PSGameState;
 };

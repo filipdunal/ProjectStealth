@@ -10,9 +10,16 @@ APSActionActor::APSActionActor()
 	bIsActive = true;
 }
 
+
 void APSActionActor::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+
+bool APSActionActor::CanPerformAction_Implementation(const TScriptInterface<IPSTriggerSource>& TriggerSource) const
+{
+	return IsActive();
 }
 
 
@@ -23,7 +30,7 @@ void APSActionActor::PerformAction_Implementation(const TScriptInterface<IPSTrig
 
 bool APSActionActor::TryPerformAction(TScriptInterface<IPSTriggerSource> TriggerSource)
 {
-	if (IsActive())
+	if (CanPerformAction(TriggerSource))
 	{
 		PerformAction(TriggerSource);
 		return true;

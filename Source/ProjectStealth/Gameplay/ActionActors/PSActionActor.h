@@ -41,6 +41,9 @@ protected:
 	void PerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource);
 	//virtual void PerformAction_Implementation(TScriptInterface<IPSTriggerSource> TriggerSource) PURE_VIRTUAL(APSActionActor, );
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Project Stealth")
+	bool CanPerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource) const;
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project Stealth")
 	bool bIsActive;

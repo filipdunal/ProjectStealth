@@ -19,10 +19,20 @@ struct FPSTriggerConeSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project Stealth")
-	float Radius;
+	float Radius = 200.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project Stealth")
-	float Angle;
+	float Angle = 90.0f;
+};
+
+
+USTRUCT(BlueprintType)
+struct FPSTriggerBoxSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project Stealth")
+	FVector HalfSize = FVector(100.0f, 100.0f, 100.0f);
 };
 
 
@@ -41,9 +51,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Project Stealth")
 	FPSTriggerDelegate OnTriggerEnd;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Project Stealth")
-	TArray<TSubclassOf<APSCharacterBase>> FilterClass;
-
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Project Stealth")
 	APSActionActor* GetActionActorChecked() const;
@@ -58,11 +65,12 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnRegister() override;
+	virtual void PostInitProperties() override;
 
 	bool CanTrigger(const AActor* OtherActor) const;
 	bool CheckClassFilter(UClass* ClassToCheck) const;
 
-	void GenerateCubeMesh();
+	void GenerateBoxMesh();
 	void GenerateConeMesh(bool bUpdateOnly);
 
 	UFUNCTION()
@@ -73,10 +81,22 @@ protected:
 	TArray<TScriptInterface<IPSTriggerSource>> TriggerSources;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
+	bool bUseOverrideTriggerMaterial;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "bUseOverrideTriggerMaterial"), Category = "Project Stealth")
+	UMaterialInterface* OverrideTriggerMaterial;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
+	TArray<TSubclassOf<UObject>> FilterClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
 	EPSTriggerType TriggerType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta= (EditCondition= "TriggerType == EPSTriggerType::Cone"), Category = "Project Stealth")
 	FPSTriggerConeSettings TriggerConeSettings;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "TriggerType == EPSTriggerType::Box"), Category = "Project Stealth")
+	FPSTriggerBoxSettings TriggerBoxSettings;
 
 	FTimerHandle UpdateConeTriggerHandle;
 

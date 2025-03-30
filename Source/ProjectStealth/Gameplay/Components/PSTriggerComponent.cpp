@@ -6,6 +6,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "ProjectStealth/Gameplay/ActionActors/PSActionActor.h"
 #include "ProjectStealth/Gameplay/Characters/PSCharacterBase.h"
+#include "ProjectStealth/Settings/PSGuardSettings.h"
+#include "ProjectStealth/Settings/PSTriggerSettings.h"
 
 #define ECC_TriggerSource ECC_GameTraceChannel1
 #define ECC_TriggerZone ECC_GameTraceChannel2
@@ -13,7 +15,6 @@
 UPSTriggerComponent::UPSTriggerComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
 	TriggerType = EPSTriggerType::Cone;
-	TriggerConeSettings = FPSTriggerConeSettings();
 	bCanEverAffectNavigation = false;
 
 	SetCollisionObjectType(ECC_TriggerZone);
@@ -51,7 +52,32 @@ void UPSTriggerComponent::OnRegister()
 {
 	Super::OnRegister();
 
-	GenerateConeMesh(false);
+	switch(TriggerType)
+	{
+	case EPSTriggerType::Cone:
+		GenerateConeMesh(false);
+		break;
+
+	case EPSTriggerType::Box:
+		GenerateBoxMesh();
+		break;
+	}
+
+	UMaterialInterface* MaterialToUse = OverrideTriggerMaterial;
+	if (!bUseOverrideTriggerMaterial)
+	{
+		if (const UPSTriggerSettings* TriggerSettings = UPSTriggerSettings::StaticClass()->GetDefaultObject<UPSTriggerSettings>())
+		{
+			MaterialToUse = TriggerSettings->DefaultMaterial.LoadSynchronous();
+		}
+	}
+	UProceduralMeshComponent::SetMaterial(0, MaterialToUse);
+}
+
+
+void UPSTriggerComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
 }
 
 
@@ -78,7 +104,7 @@ bool UPSTriggerComponent::CheckClassFilter(UClass* ClassToCheck) const
 		return true;
 	}
 
-	return FilterClass.ContainsByPredicate([ClassToCheck](const TSubclassOf<APSCharacterBase>& CharClass)
+	return FilterClass.ContainsByPredicate([ClassToCheck](const TSubclassOf<UObject>& CharClass)
 	{
 		return ClassToCheck->IsChildOf(CharClass);
 	});
@@ -92,26 +118,28 @@ APSActionActor* UPSTriggerComponent::GetActionActorChecked() const
 }
 
 
-void UPSTriggerComponent::GenerateCubeMesh()
+void UPSTriggerComponent::GenerateBoxMesh()
 {
+	const FVector HalfSize = TriggerBoxSettings.HalfSize;
+
 	TArray<FVector> Vertices = {
-		FVector(-50.f, -50.f, -50.f), // 0
-		FVector(50.f, -50.f, -50.f),  // 1
-		FVector(50.f, 50.f, -50.f),   // 2
-		FVector(-50.f, 50.f, -50.f),  // 3
-		FVector(-50.f, -50.f, 50.f),  // 4
-		FVector(50.f, -50.f, 50.f),   // 5
-		FVector(50.f, 50.f, 50.f),    // 6
-		FVector(-50.f, 50.f, 50.f)    // 7
+		FVector(-HalfSize.X, -HalfSize.Y, -HalfSize.Z), // 0
+		FVector(HalfSize.X, -HalfSize.Y, -HalfSize.Z),  // 1
+		FVector(HalfSize.X, HalfSize.Y, -HalfSize.Z),   // 2
+		FVector(-HalfSize.X, HalfSize.Y, -HalfSize.Z),  // 3
+		FVector(-HalfSize.X, -HalfSize.Y, HalfSize.Z),  // 4
+		FVector(HalfSize.X, -HalfSize.Y, HalfSize.Z),   // 5
+		FVector(HalfSize.X, HalfSize.Y, HalfSize.Z),    // 6
+		FVector(-HalfSize.X, HalfSize.Y, HalfSize.Z)    // 7
 	};
 
 	TArray<int32> Triangles = {
-		0, 2, 1, 0, 3, 2, // Front face
-		4, 5, 6, 4, 6, 7, // Back face
-		0, 1, 5, 0, 5, 4, // Bottom face
-		2, 3, 7, 2, 7, 6, // Top face
-		0, 4, 7, 0, 7, 3, // Left face
-		1, 2, 6, 1, 6, 5  // Right face
+		0, 1, 2,  0, 2, 3,  // Front face
+		4, 6, 5,  4, 7, 6,  // Back face
+		0, 5, 1,  0, 4, 5,  // Bottom face
+		2, 6, 7,  2, 7, 3,  // Top face
+		0, 3, 7,  0, 7, 4,  // Left face
+		1, 5, 6,  1, 6, 2   // Right face
 	};
 
 	TArray<FVector> Normals = {

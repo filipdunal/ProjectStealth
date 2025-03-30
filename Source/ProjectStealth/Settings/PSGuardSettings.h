@@ -14,9 +14,9 @@ class PROJECTSTEALTH_API UPSGuardSettings : public UPSSettingsObject
 
 public:
 
-	virtual FName GetSettingsName() const override { return TEXT("Guard Settings");};
+	virtual FName GetSettingsName() const override { return TEXT("Guard Settings");}
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "Guard Settings")
 	TSubclassOf<UUserWidget> GuardWidgetClass;
 };

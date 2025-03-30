@@ -3,3 +3,21 @@
 
 #include "ProjectStealth/Core/PSGameModeBase.h"
 
+#include "PSGameStateBase.h"
+
+
+void APSGameModeBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	PSGameState = GetGameState<APSGameStateBase>();
+}
+
+
+void APSGameModeBase::EndGame(bool bWin)
+{
+	if(PSGameState)
+	{
+		PSGameState->OnGameOver.Broadcast(bWin);
+	}
+}

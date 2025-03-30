@@ -16,4 +16,10 @@ class PROJECTSTEALTH_API UPSSettingsObject : public UObject
 
 public:
 	virtual FName GetSettingsName() const PURE_VIRTUAL(UPSSettingsObject::GetSettingsName, return NAME_None;);
+
+	template<typename T, typename = TEnableIf<TIsDerivedFrom<T, UPSSettingsObject>::Value>>
+	static const T* GetSettings()
+	{
+		return StaticClass()->GetDefaultObject<T>();
+	}
 };

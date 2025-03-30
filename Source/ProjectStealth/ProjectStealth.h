@@ -4,14 +4,15 @@
 
 #include "CoreMinimal.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class EPSTriggerType: uint8
 {
-	Cone UMETA(DisplayName = "Cone")
+	Cone UMETA(DisplayName = "Cone"),
+	Box UMETA(DisplayName = "Box")
 };
 
 
-UENUM()
+UENUM(BlueprintType)
 enum class EPSGuardState : uint8
 {
 	Normal UMETA(DisplayName = "Normal"),
@@ -20,7 +21,7 @@ enum class EPSGuardState : uint8
 };
 
 
-UENUM()
+UENUM(BlueprintType)
 enum class EPSSuspicionLevel : uint8
 {
 	None UMETA(DisplayName = "None"),
