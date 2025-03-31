@@ -52,6 +52,9 @@ public:
 	FPSTriggerDelegate OnTriggerEnd;
 
 
+	void CallTriggerBegin(TScriptInterface<IPSTriggerSource> TriggerSource);
+	void CallTriggerEnd(TScriptInterface<IPSTriggerSource> TriggerSource);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Project Stealth")
 	APSActionActor* GetActionActorChecked() const;
 

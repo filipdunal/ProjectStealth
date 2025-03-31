@@ -11,5 +11,7 @@ UCLASS(meta = (BlueprintSpawnableComponent))
 class PROJECTSTEALTH_API UPSInteractTriggerComponent : public UPSTriggerComponent
 {
 	GENERATED_BODY()
-	
+
+public:
+	UPSInteractTriggerComponent(const FObjectInitializer& ObjectInitializer);
 };

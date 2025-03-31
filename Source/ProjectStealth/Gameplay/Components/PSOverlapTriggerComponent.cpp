@@ -4,8 +4,14 @@
 #include "ProjectStealth/Gameplay/Components/PSOverlapTriggerComponent.h"
 #include "ProjectStealth/Gameplay/Interfaces/PSTriggerSource.h"
 
+#define ECC_TriggerSource ECC_GameTraceChannel1
+#define ECC_TriggerZone ECC_GameTraceChannel2
+
+
 UPSOverlapTriggerComponent::UPSOverlapTriggerComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
+	SetCollisionResponseToAllChannels(ECR_Ignore);
+	SetCollisionResponseToChannel(ECC_TriggerSource, ECR_Overlap);
 }
 
 
@@ -23,7 +29,7 @@ void UPSOverlapTriggerComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedC
 {
 	if (CanTrigger(OtherActor))
 	{
-		OnTriggerBegin.Broadcast(OtherActor, this);
+		CallTriggerBegin(OtherActor);
 	}
 }
 
@@ -33,6 +39,6 @@ void UPSOverlapTriggerComponent::OnEndOverlap(UPrimitiveComponent* OverlappedCom
 {
 	if (CanTrigger(OtherActor))
 	{
-		OnTriggerEnd.Broadcast(OtherActor, this);
+		CallTriggerEnd(OtherActor);
 	}
 }

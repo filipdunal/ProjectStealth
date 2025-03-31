@@ -4,11 +4,22 @@
 #include "ProjectStealth/Gameplay/Components/PSInteractionComponent.h"
 #include "PSInteractTriggerComponent.h"
 
+#define ECR_InteractionComponent ECC_GameTraceChannel3
+#define ECR_TriggerZone ECC_GameTraceChannel2
+
+
+UPSInteractionComponent::UPSInteractionComponent(const FObjectInitializer& ObjectInitializer)
+{
+	SetCollisionResponseToAllChannels(ECR_Ignore);
+	SetCollisionObjectType(ECR_InteractionComponent);
+	SetCollisionResponseToChannel(ECR_TriggerZone, ECR_Overlap);
+}
+
 
 void UPSInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	OnComponentBeginOverlap.AddUniqueDynamic(this, &UPSInteractionComponent::OnBeginOverlap);
 	OnComponentEndOverlap.AddUniqueDynamic(this, &UPSInteractionComponent::OnEndOverlap);
 }
@@ -47,16 +58,15 @@ void UPSInteractionComponent::UpdateCurrentTrigger()
 
 	if (OverlappedTriggers.Num() > 0)
 	{
-		OverlappedTriggers.Sort([this](const TObjectPtr<UPSInteractTriggerComponent>& A, const TObjectPtr<UPSInteractTriggerComponent>& B)
+		UPSInteractTriggerComponent* ClosestTrigger = OverlappedTriggers[0];
+		for(UPSInteractTriggerComponent* Trigger: OverlappedTriggers)
 		{
-			if (A && IsValid(A) && B && IsValid(B))
+			if(FVector::Distance(GetComponentLocation(), Trigger->GetComponentLocation()) < FVector::Distance(GetComponentLocation(), ClosestTrigger->GetComponentLocation()))
 			{
-				return FVector::Distance(GetComponentLocation(), A->GetOwner()->GetActorLocation()) < FVector::Distance(GetComponentLocation(), A->GetOwner()->GetActorLocation());
+				ClosestTrigger = Trigger;
 			}
-			return false;
-		});
-
-		CurrentTrigger = OverlappedTriggers[0];
+		}
+		CurrentTrigger = ClosestTrigger;
 		GetWorld()->GetTimerManager().SetTimer(UpdateCurrentTriggerHandle, this, &UPSInteractionComponent::UpdateCurrentTrigger, 0.5f, false);
 	}
 	else
@@ -68,5 +78,23 @@ void UPSInteractionComponent::UpdateCurrentTrigger()
 	if(CurrentTrigger != PreviousTrigger)
 	{
 		OnCurrentTriggerChanged.Broadcast(IsValid(PreviousTrigger) ? PreviousTrigger : nullptr, CurrentTrigger);
+	}
+}
+
+
+void UPSInteractionComponent::StartPrimaryInteract()
+{
+	if(IsValid(CurrentTrigger))
+	{
+		CurrentTrigger->CallTriggerBegin(GetOwner());
+	}
+}
+
+
+void UPSInteractionComponent::CompletePrimaryInteract()
+{
+	if(IsValid(CurrentTrigger))
+	{
+		CurrentTrigger->CallTriggerEnd(GetOwner());
 	}
 }

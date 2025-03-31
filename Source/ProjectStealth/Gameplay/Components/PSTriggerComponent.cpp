@@ -9,8 +9,8 @@
 #include "ProjectStealth/Settings/PSGuardSettings.h"
 #include "ProjectStealth/Settings/PSTriggerSettings.h"
 
-#define ECC_TriggerSource ECC_GameTraceChannel1
 #define ECC_TriggerZone ECC_GameTraceChannel2
+
 
 UPSTriggerComponent::UPSTriggerComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
@@ -18,8 +18,6 @@ UPSTriggerComponent::UPSTriggerComponent(const FObjectInitializer& ObjectInitial
 	bCanEverAffectNavigation = false;
 
 	SetCollisionObjectType(ECC_TriggerZone);
-	SetCollisionResponseToAllChannels(ECR_Ignore);
-	SetCollisionResponseToChannel(ECC_TriggerSource, ECR_Overlap);
 }
 
 
@@ -108,6 +106,18 @@ bool UPSTriggerComponent::CheckClassFilter(UClass* ClassToCheck) const
 	{
 		return ClassToCheck->IsChildOf(CharClass);
 	});
+}
+
+
+void UPSTriggerComponent::CallTriggerBegin(TScriptInterface<IPSTriggerSource> TriggerSource)
+{
+	OnTriggerBegin.Broadcast(TriggerSource, this);
+}
+
+
+void UPSTriggerComponent::CallTriggerEnd(TScriptInterface<IPSTriggerSource> TriggerSource)
+{
+	OnTriggerEnd.Broadcast(TriggerSource, this);
 }
 
 

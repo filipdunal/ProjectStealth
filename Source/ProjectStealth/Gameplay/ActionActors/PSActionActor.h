@@ -45,7 +45,7 @@ protected:
 	bool CanPerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource) const;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project Stealth")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
 	bool bIsActive;
 
 public:

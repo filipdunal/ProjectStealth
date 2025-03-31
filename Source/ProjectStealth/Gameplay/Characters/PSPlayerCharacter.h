@@ -26,7 +26,7 @@ public:
 	APSPlayerCharacter();
 
 	virtual EPSSuspicionLevel GetSuspicionLevel_Implementation() override;
-
+	UPSInteractionComponent* GetInteractionComponent();
 protected:
 
 	virtual void BeginPlay() override;
@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Project Stealth|Inputs")
 	TObjectPtr<UInputAction> LookInputAction;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Project Stealth|Inputs")
+	TObjectPtr<UInputAction> PrimaryInteractInputAction;
+
 	UPROPERTY(EditDefaultsOnly, meta=(ClampMin=0.0f), Category = "Project Stealth|Inputs")
 	float LookAccumulatingRate;
 
@@ -70,4 +73,6 @@ protected:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void PrimaryInteract_Started(const FInputActionValue& Value);
+	void PrimaryInteract_Completed(const FInputActionValue& Value);
 };

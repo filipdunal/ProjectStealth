@@ -65,6 +65,8 @@ void APSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	{
 		EnhancedInput->BindAction(MoveInputAction, ETriggerEvent::Triggered, this, &APSPlayerCharacter::Move);
 		EnhancedInput->BindAction(LookInputAction, ETriggerEvent::Triggered, this, &APSPlayerCharacter::Look);
+		EnhancedInput->BindAction(PrimaryInteractInputAction, ETriggerEvent::Started, this, &APSPlayerCharacter::PrimaryInteract_Started);
+		EnhancedInput->BindAction(PrimaryInteractInputAction, ETriggerEvent::Completed, this, &APSPlayerCharacter::PrimaryInteract_Completed);
 	}
 }
 
@@ -87,7 +89,32 @@ void APSPlayerCharacter::Look(const FInputActionValue& Value)
 }
 
 
+void APSPlayerCharacter::PrimaryInteract_Started(const FInputActionValue& Value)
+{
+	if(ensure(InteractionComponent))
+	{
+		InteractionComponent->StartPrimaryInteract();
+	}
+}
+
+
+void APSPlayerCharacter::PrimaryInteract_Completed(const FInputActionValue& Value)
+{
+	if (ensure(InteractionComponent))
+	{
+		InteractionComponent->CompletePrimaryInteract();
+	}
+}
+
+
 EPSSuspicionLevel APSPlayerCharacter::GetSuspicionLevel_Implementation()
 {
+	// TODO: Add being not suspicious if player is in camouflage or pretends to be friend
 	return EPSSuspicionLevel::High;
+}
+
+
+UPSInteractionComponent* APSPlayerCharacter::GetInteractionComponent()
+{
+	return IsValid(InteractionComponent) ? InteractionComponent : nullptr;
 }

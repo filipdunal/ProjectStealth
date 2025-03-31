@@ -17,6 +17,9 @@ UCLASS()
 class PROJECTSTEALTH_API UPSInteractionComponent : public USphereComponent
 {
 	GENERATED_BODY()
+public:
+
+	UPSInteractionComponent(const FObjectInitializer& ObjectInitializer);
 
 protected:
 
@@ -47,5 +50,8 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
-	FORCEINLINE UPSInteractTriggerComponent* GetCurrentTrigger() const { return CurrentTrigger; };
+	FORCEINLINE UPSInteractTriggerComponent* GetCurrentTrigger() const { return CurrentTrigger.Get(); };
+
+	void StartPrimaryInteract();
+	void CompletePrimaryInteract();
 };
