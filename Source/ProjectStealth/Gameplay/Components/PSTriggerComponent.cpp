@@ -6,7 +6,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "ProjectStealth/Gameplay/ActionActors/PSActionActor.h"
 #include "ProjectStealth/Gameplay/Characters/PSCharacterBase.h"
-#include "ProjectStealth/Settings/PSGuardSettings.h"
 #include "ProjectStealth/Settings/PSTriggerSettings.h"
 
 #define ECC_TriggerZone ECC_GameTraceChannel2
@@ -16,6 +15,10 @@ UPSTriggerComponent::UPSTriggerComponent(const FObjectInitializer& ObjectInitial
 {
 	TriggerType = EPSTriggerType::Cone;
 	bCanEverAffectNavigation = false;
+	bUseComplexAsSimpleCollision = false;
+
+	BaseTriggerStrength = 1.0f;
+	TriggerStrengthFalloffPerDistance = 0.1f;
 
 	SetCollisionObjectType(ECC_TriggerZone);
 }
@@ -29,7 +32,6 @@ void UPSTriggerComponent::BeginPlay()
 	{
 		GetWorld()->GetTimerManager().SetTimer(UpdateConeTriggerHandle, this, &UPSTriggerComponent::UpdateConeTrigger, 0.01f, true, FMath::RandRange(0.0f, 0.1f));
 	}
-
 	OnTriggerBegin.AddUniqueDynamic(this, &UPSTriggerComponent::RegisterTriggerSource);
 	OnTriggerEnd.AddUniqueDynamic(this, &UPSTriggerComponent::UnregisterTriggerSource);
 }
@@ -76,6 +78,20 @@ void UPSTriggerComponent::OnRegister()
 void UPSTriggerComponent::PostInitProperties()
 {
 	Super::PostInitProperties();
+}
+
+
+float UPSTriggerComponent::GetTriggerStrengthForSource(const TScriptInterface<IPSTriggerSource>& TriggerSource) const
+{
+	float DistanceMultiplier = 1.0f;
+	if (const AActor* TriggerSourceActor = Cast<AActor>(TriggerSource.GetObject()))
+	{
+		const float Distance = FVector::Distance(GetComponentLocation(), TriggerSourceActor->GetActorLocation());
+		DistanceMultiplier = 1.0f - (TriggerStrengthFalloffPerDistance * Distance / 100.0f);
+		DistanceMultiplier = FMath::Max(DistanceMultiplier, 0.0f);
+	}
+
+	return DistanceMultiplier;
 }
 
 
@@ -172,6 +188,10 @@ void UPSTriggerComponent::GenerateBoxMesh()
 	}
 
 	CreateMeshSection(0, Vertices, Triangles, Normals, UVs, TArray<FColor>(), Tangents, true);
+
+	TArray<TArray<FVector>> ConvexMeshes;
+	ConvexMeshes.Add(Vertices);
+	SetCollisionConvexMeshes(ConvexMeshes);
 }
 
 
@@ -255,6 +275,10 @@ void UPSTriggerComponent::GenerateConeMesh(bool bUpdateOnly)
 	{
 		CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
 	}
+
+	TArray<TArray<FVector>> ConvexMeshes;
+	ConvexMeshes.Add(Vertices);
+	SetCollisionConvexMeshes(ConvexMeshes);
 }
 
 

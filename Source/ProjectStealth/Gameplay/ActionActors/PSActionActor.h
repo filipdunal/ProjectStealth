@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
 	bool TryPerformAction(TScriptInterface<IPSTriggerSource> TriggerSource);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Project Stealth")
+	bool CanPerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource) const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -41,11 +44,8 @@ protected:
 	void PerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource);
 	//virtual void PerformAction_Implementation(TScriptInterface<IPSTriggerSource> TriggerSource) PURE_VIRTUAL(APSActionActor, );
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Project Stealth")
-	bool CanPerformAction(const TScriptInterface<IPSTriggerSource>& TriggerSource) const;
 
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Project Stealth")
 	bool bIsActive;
 
 public:

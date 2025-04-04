@@ -6,7 +6,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "PSGameStateBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPSGameOver, bool, bWin);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPSGameEnded, bool, bWin);
 
 UCLASS()
 class PROJECTSTEALTH_API APSGameStateBase : public AGameStateBase
@@ -16,5 +16,5 @@ class PROJECTSTEALTH_API APSGameStateBase : public AGameStateBase
 public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Project Stealth")
-	FPSGameOver OnGameOver;
+	FPSGameEnded OnGameEnded;
 };

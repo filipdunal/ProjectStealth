@@ -61,7 +61,10 @@ public:
 	const TArray<TScriptInterface<IPSTriggerSource>>& GetTriggerSources() const { return TriggerSources; }
 
 	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
-	FORCEINLINE float GetTriggerStrength() const { return TriggerStrength; }
+	float GetTriggerStrengthForSource(const TScriptInterface<IPSTriggerSource>& TriggerSource) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Project Stealth")
+	bool CanTrigger(const AActor* OtherActor) const;
 
 protected:
 
@@ -70,7 +73,7 @@ protected:
 	virtual void OnRegister() override;
 	virtual void PostInitProperties() override;
 
-	bool CanTrigger(const AActor* OtherActor) const;
+	
 	bool CheckClassFilter(UClass* ClassToCheck) const;
 
 	void GenerateBoxMesh();
@@ -101,11 +104,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "TriggerType == EPSTriggerType::Box"), Category = "Project Stealth")
 	FPSTriggerBoxSettings TriggerBoxSettings;
 
+	// Trigger strength will be divided by that rate per 100 cm of distance between trigger and source of trigger
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project Stealth")
+	float TriggerStrengthFalloffPerDistance;
+
 	FTimerHandle UpdateConeTriggerHandle;
 
 	// Strength of trigger used e.g. in Guard Component to make weaker and stronger senses
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0.0f),  Category = "Project Stealth")
-	float TriggerStrength;
+	float BaseTriggerStrength;
 
 private:
 

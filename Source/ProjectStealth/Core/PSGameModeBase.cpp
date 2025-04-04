@@ -16,8 +16,12 @@ void APSGameModeBase::BeginPlay()
 
 void APSGameModeBase::EndGame(bool bWin)
 {
-	if(PSGameState)
+	if(!bIsGameEnded)
 	{
-		PSGameState->OnGameOver.Broadcast(bWin);
+		bIsGameEnded = true;
+		if (ensure(PSGameState))
+		{
+			PSGameState->OnGameEnded.Broadcast(bWin);
+		}
 	}
 }

@@ -47,6 +47,9 @@ protected:
 	UFUNCTION()
 	void UpdateAttention();
 
+	UFUNCTION()
+	void CheckForDetected(EPSGuardState NewGuardState);
+
 
 	FTimerHandle UpdateAttentionHandle;
 

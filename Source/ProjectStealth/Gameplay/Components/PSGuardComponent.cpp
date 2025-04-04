@@ -5,6 +5,8 @@
 
 #include "PSTriggerComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "ProjectStealth/Core/PSGameModeBase.h"
 #include "ProjectStealth/Gameplay/Interfaces/PSTriggerSource.h"
 #include "ProjectStealth/Settings/PSGuardSettings.h"
 #include "ProjectStealth/Widgets/HUD/PSGuardWidget.h"
@@ -48,6 +50,8 @@ void UPSGuardComponent::BeginPlay()
 		Trigger->OnTriggerBegin.AddUniqueDynamic(this, &UPSGuardComponent::OnTriggerBegin);
 	}
 
+	OnGuardStateChanged.AddUniqueDynamic(this, &UPSGuardComponent::CheckForDetected);
+
 	// Add guard widget
 	if(APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
@@ -62,6 +66,7 @@ void UPSGuardComponent::BeginPlay()
 		}
 	}
 }
+
 
 void UPSGuardComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
@@ -83,18 +88,6 @@ void UPSGuardComponent::OnTriggerBegin(TScriptInterface<IPSTriggerSource> Trigge
 			World->GetTimerManager().SetTimer(UpdateAttentionHandle, this, &UPSGuardComponent::UpdateAttention, UpdateAttentionRate, true);
 		}
 	}
-
-	/*
-	for (UPSTriggerComponent* Trigger : Triggers)
-	{
-		if(Trigger != TriggerComponent)
-		{
-			if(!Trigger->GetTriggerSources().Contains(TriggerSource))
-			{
-			}
-		}
-	}
-	*/
 }
 
 
@@ -102,6 +95,7 @@ void UPSGuardComponent::UpdateAttention()
 {
 	TScriptInterface<IPSTriggerSource> MostSuspiciousTriggerSource = nullptr;
 	EPSSuspicionLevel SuspicionLevel = EPSSuspicionLevel::None;
+	const UPSTriggerComponent* TriggerComp = nullptr;
 
 	for (const UPSTriggerComponent* Trigger : Triggers)
 	{
@@ -111,6 +105,7 @@ void UPSGuardComponent::UpdateAttention()
 			{
 				MostSuspiciousTriggerSource = TriggerSource;
 				SuspicionLevel = IPSTriggerSource::Execute_GetSuspicionLevel(TriggerSource.GetObject());
+				TriggerComp = Trigger;
 			}
 		}
 	}
@@ -123,7 +118,7 @@ void UPSGuardComponent::UpdateAttention()
 		{
 			if (DesiredAttentionLevel > AttentionLevel)
 			{
-				AttentionLevel += Settings->AttentionRiseRate * UpdateAttentionRate;
+				AttentionLevel += Settings->AttentionRiseRate * UpdateAttentionRate * TriggerComp->GetTriggerStrengthForSource(MostSuspiciousTriggerSource);
 				AttentionLevel = FMath::Min(AttentionLevel, DesiredAttentionLevel);
 
 				bAttentionWasRising = true;
@@ -147,7 +142,12 @@ void UPSGuardComponent::UpdateAttention()
 			OnAttentionChanged.Broadcast(AttentionLevel);
 
 			const EPSGuardState OldGuardState = GuardState;
-			if(AttentionLevel > 0.66f)
+
+			if(AttentionLevel == 1.0f)
+			{
+				GuardState = EPSGuardState::Detected;
+			}
+			else if(AttentionLevel > 0.66f)
 			{
 				GuardState = EPSGuardState::Alerted;
 			}
@@ -172,6 +172,18 @@ void UPSGuardComponent::UpdateAttention()
 		if(const UWorld* World = GetWorld())
 		{
 			World->GetTimerManager().ClearTimer(UpdateAttentionHandle);
+		}
+	}
+}
+
+
+void UPSGuardComponent::CheckForDetected(EPSGuardState NewGuardState)
+{
+	if(NewGuardState == EPSGuardState::Detected)
+	{
+		if(APSGameModeBase* GameMode = Cast<APSGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		{
+			GameMode->EndGame(false);
 		}
 	}
 }
@@ -211,4 +223,3 @@ void UPSGuardComponent::CancelDelayDecreasingAttention()
 		World->GetTimerManager().ClearTimer(DelayDecreasingAttentionHandle);
 	}
 }
-

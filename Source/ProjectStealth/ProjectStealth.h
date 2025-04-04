@@ -17,7 +17,8 @@ enum class EPSGuardState : uint8
 {
 	Normal UMETA(DisplayName = "Normal"),
 	Suspicious UMETA(DisplayName = "Suspicious"),
-	Alerted UMETA(DisplayName = "Alerted")
+	Alerted UMETA(DisplayName = "Alerted"),
+	Detected UMETA(DisplayName = "Detected")
 };
 
 
